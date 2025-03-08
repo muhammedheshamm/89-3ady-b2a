@@ -61,7 +61,6 @@ public class CartService extends MainService<Cart> {
         Cart cart = cartRepository.getCartByUserId(userId);
         if (cart != null) {
             cart.getProducts().clear();
-            cartRepository.addCart(cart);
         }
     }
 

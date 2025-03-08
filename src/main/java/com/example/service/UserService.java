@@ -8,13 +8,12 @@ import com.example.repository.OrderRepository;
 import com.example.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
-@SuppressWarnings("rawtypes")
 public class UserService extends MainService<User>{
 
     private final UserRepository userRepository;
@@ -29,7 +28,7 @@ public class UserService extends MainService<User>{
         this.cartService = cartService;
     }
 
-    public User addUser(User user) {
+    public User addUser(User user) throws Exception {
         return userRepository.addUser(user);
     }
 
@@ -37,18 +36,18 @@ public class UserService extends MainService<User>{
         return userRepository.getUsers();
     }
 
-    public User getUserById(UUID userId) {
+    public User getUserById(UUID userId) throws Exception {
         return userRepository.getUserById(userId);
     }
 
-    public List<Order> getOrdersByUserId(UUID userId) {
+    public List<Order> getOrdersByUserId(UUID userId) throws Exception {
         return userRepository.getOrdersByUserId(userId);
     }
 
-    public void addOrderToUser(UUID userId) {
+    public void addOrderToUser(UUID userId) throws Exception {
         Cart userCart = cartService.getCartByUserId(userId);
         if (userCart == null || userCart.getProducts().isEmpty()) {
-            throw new IllegalArgumentException("Cart is empty or does not exist.");
+            throw new Exception ("Cart is empty or does not exist.");
         }
 
         double totalPrice = userCart.getProducts().stream().mapToDouble(Product::getPrice).sum();
@@ -63,13 +62,17 @@ public class UserService extends MainService<User>{
         cartService.emptyCart(userId);
     }
 
-    public void removeOrderFromUser(UUID userId, UUID orderId) {
+    public void removeOrderFromUser(UUID userId, UUID orderId) throws Exception {
         userRepository.removeOrderFromUser(userId, orderId);
         orderRepository.deleteOrderById(orderId);
     }
 
-    public void deleteUserById(UUID userId) {
-        cartService.deleteCartById(userId);
+    public void deleteUserById(UUID userId) throws Exception {
+        List<Cart> userCarts = cartService.getCarts().stream()
+                .filter(cart -> cart.getUserId().equals(userId))
+                .collect(Collectors.toList());
+        userCarts.forEach(cart -> cartService.deleteCartById(cart.getId()));
+
         userRepository.deleteUserById(userId);
     }
 }

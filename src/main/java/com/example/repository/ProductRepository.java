@@ -11,7 +11,7 @@ import java.util.UUID;
 public class ProductRepository extends MainRepository<Product> {
     @Override
     protected String getDataPath() {
-        return "products.json";
+        return "src/main/java/com/example/data/products.json";
     }
 
     @Override

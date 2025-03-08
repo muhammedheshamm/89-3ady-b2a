@@ -13,7 +13,7 @@ import java.util.stream.Collectors;
 public class OrderRepository extends MainRepository<Order> {
     @Override
     protected String getDataPath() {
-        return "orders.json";
+        return "src/main/java/com/example/data/orders.json";
     }
 
     @Override

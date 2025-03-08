@@ -3,23 +3,18 @@ package com.example.repository;
 import com.example.model.Order;
 import com.example.model.User;
 import org.springframework.stereotype.Repository;
-
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Repository
-@SuppressWarnings("rawtypes")
 public class UserRepository extends MainRepository<User> {
 
-    public UserRepository() {
-    }
+    public UserRepository() {}
 
     @Override
     protected String getDataPath() {
-        return "users.json"; // Path to JSON storage
+        return "src/main/java/com/example/data/users.json";
     }
 
     @Override
@@ -33,104 +28,76 @@ public class UserRepository extends MainRepository<User> {
     }
 
     // Retrieve a user by ID
-    public User getUserById(UUID userId) {
+    public User getUserById(UUID userId) throws Exception {
         for (User user : findAll()) {
             if (user.getId().equals(userId)) {
                 return user;
             }
         }
-        throw new RuntimeException("User not found with ID: " + userId);
+        throw new Exception("User not found");
     }
 
     // Add a new user
-    public User addUser(User user) {
-        ArrayList<User> users = findAll();
-
-        // Generate a new UUID if not provided
-//        if (user.getId() == null) {
-//            user.setId(UUID.randomUUID());
-//        }
-
+    public User addUser(User user) throws Exception {
         // Check if user ID already exists
-        for (User u : users) {
+        for (User u : findAll()) {
             if (u.getId().equals(user.getId())) {
-                throw new RuntimeException("User with ID " + user.getId() + " already exists.");
+                throw new Exception("User Already Exists");
             }
         }
 
-        users.add(user);
-        saveAll(users);
+        // Save the new user
+        save(user);
         return user;
     }
 
-
-
-
     // 6.2.2.4 Get The Orders of a User
-    public List<Order> getOrdersByUserId(UUID userId) {
-        User user = getUserById(userId); // Retrieve user by ID
-        if (user == null) {
-            throw new RuntimeException("User with ID " + userId + " not found.");
+    public List<Order> getOrdersByUserId(UUID userId) throws Exception {
+        try {
+            User user = getUserById(userId); // Retrieve user by ID
+            return user.getOrders();
+        } catch (Exception e) {
+            throw new Exception("User not found");
         }
-        return user.getOrders();
     }
 
     // 6.2.2.5 Add Order to the User
-    public void addOrderToUser(UUID userId, Order order) {
-        ArrayList<User> users = findAll(); // Load all users
-        for (User user : users) {
-            if (user.getId().equals(userId)) {
-//                if (order.getId() == null) {
-//                    order.setId(UUID.randomUUID()); // Ensure order has a unique ID
-//                }
-                user.getOrders().add(order); // Add the order to the user's order list
-                saveAll(users); // Save updated user data back to users.json
-                System.out.println("Order added successfully for user " + userId);
-                return;
-            }
+    public void addOrderToUser(UUID userId, Order order) throws Exception {
+        try {
+            User user = getUserById(userId); // Retrieve user by ID
+            user.getOrders().add(order); // Add order to user
+            save(user); // Save updated user data back to users.json
+        } catch (Exception e) {
+            throw new Exception("User not found");
         }
-        throw new RuntimeException("User with ID " + userId + " not found.");
     }
 
 
     // 6.2.2.6 Remove Order from User
-    public void removeOrderFromUser(UUID userId, UUID orderId) {
-        ArrayList<User> users = findAll(); // Load all users
+    public void removeOrderFromUser(UUID userId, UUID orderId) throws Exception {
+        try {
+            User user = getUserById(userId); // Retrieve user by ID
+            List<Order> orders = user.getOrders(); // Retrieve user's orders
 
-        for (User user : users) {
-            if (user.getId().equals(userId)) {
-                for (Order order : user.getOrders()) {
-                    if (order.getId().equals(orderId)) {
-                        user.getOrders().remove(order);
-                        saveAll(users); // Save updated user data back to users.json
-                        System.out.println("Order with ID " + orderId + " removed successfully for user " + userId);
-                        return;
-                    }
-                }
-                throw new RuntimeException("Order with ID " + orderId + " not found for user " + userId);
-            }
+            // Remove order by ID
+            orders.removeIf(order -> order.getId().equals(orderId));
+
+            user.setOrders(orders); // Update user's orders
+            save(user); // Save updated user data back to users.json
+        } catch (Exception e) {
+            throw new Exception("User not found");
         }
-
-        throw new RuntimeException("User with ID " + userId + " not found.");
     }
 
+    public void deleteUserById(UUID userId) throws Exception {
+        try {
+            User user = getUserById(userId); // Retrieve user by ID
+            ArrayList<User> users = findAll(); // Retrieve all users
+            users.remove(user); // Remove user from list
+            saveAll(users); // Save updated user list back to users.json
 
-
-
-
-    public void deleteUserById(UUID userId) {
-        ArrayList<User> users = findAll();
-
-        for (User user : users) {
-            if (user.getId().equals(userId)) {
-                users.remove(user);
-                saveAll(users);
-                return;
-            }
+        } catch (Exception e) {
+            throw new Exception("User not found");
         }
-
-        throw new RuntimeException("User with ID " + userId + " not found.");
     }
-
-
 }
