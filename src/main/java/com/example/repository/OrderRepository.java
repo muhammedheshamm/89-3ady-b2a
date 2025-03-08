@@ -1,16 +1,15 @@
 package com.example.repository;
 
 import com.example.model.Order;
-import com.example.model.User;
 import org.springframework.stereotype.Repository;
-
 import java.util.ArrayList;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Repository
-@SuppressWarnings("rawtypes")
 public class OrderRepository extends MainRepository<Order> {
+    
+    public OrderRepository() {}
+
     @Override
     protected String getDataPath() {
         return "src/main/java/com/example/data/orders.json";
@@ -21,46 +20,35 @@ public class OrderRepository extends MainRepository<Order> {
         return Order[].class;
     }
 
-    public OrderRepository() {
-    }
-    public void addOrder(Order order) {
-        ArrayList<Order> orders = findAll(); // Retrieve existing orders
+    public void addOrder(Order order) throws Exception {
+        // check if order ID already exists
+        for (Order o : findAll()) {
+            if (o.getId().equals(order.getId())) {
+                throw new Exception("Order Already Exists");
+            }
+        }
 
-        // Ensure the order has a unique ID
-//        if (order.getId() == null) {
-//            order.setId(UUID.randomUUID()); // Assign a new UUID if missing
-//        }
-
-        orders.add(order); // Add the new order to the list
-        saveAll(orders); // Save updated orders list back to JSON
+        save(order);
     }
 
-    public  ArrayList<Order> getOrders() {
+    public ArrayList<Order> getOrders() {
         return findAll(); // Retrieve all orders from orders.json
     }
 
-    public Order getOrderById(UUID orderId) {
+    public Order getOrderById(UUID orderId) throws Exception {
         for (Order order : findAll()) {
             if (order.getId().equals(orderId)) {
                 return order;
             }
         }
-        throw new RuntimeException("Order with ID " + orderId + " not found.");
+        throw new Exception("Order not found");
     }
 
-    public void deleteOrderById(UUID orderId) {
+    public void deleteOrderById(UUID orderId) throws Exception {
+        Order order = getOrderById(orderId);
         ArrayList<Order> orders = findAll();
-
-        for (Order order : orders) {
-            if (order.getId().equals(orderId)) {
-                orders.remove(order);
-                saveAll(orders);
-                System.out.println("Order deleted: " + orderId);
-                return;
-            }
-        }
-
-        throw new RuntimeException("Order with ID " + orderId + " not found.");
+        orders.remove(order);
+        saveAll(orders);
     }
 
 }

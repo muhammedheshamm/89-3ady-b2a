@@ -4,12 +4,10 @@ import com.example.model.Order;
 import com.example.repository.OrderRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
 import java.util.ArrayList;
 import java.util.UUID;
 
 @Service
-@SuppressWarnings("rawtypes")
 public class OrderService extends MainService<Order> {
 
     private final OrderRepository orderRepository;
@@ -20,7 +18,7 @@ public class OrderService extends MainService<Order> {
         this.orderRepository = orderRepository;
     }
 
-    public void addOrder(Order order) {
+    public void addOrder(Order order) throws Exception {
         orderRepository.addOrder(order);
     }
 
@@ -28,15 +26,11 @@ public class OrderService extends MainService<Order> {
         return orderRepository.getOrders();
     }
 
-    public Order getOrderById(UUID orderId) {
+    public Order getOrderById(UUID orderId) throws Exception {
         return orderRepository.getOrderById(orderId);
     }
 
-    public void deleteOrderById(UUID orderId) throws IllegalArgumentException {
-        Order order = orderRepository.getOrderById(orderId);
-        if (order == null) {
-            throw new IllegalArgumentException("Order not found.");
-        }
+    public void deleteOrderById(UUID orderId) throws Exception {
         orderRepository.deleteOrderById(orderId);
     }
 }
