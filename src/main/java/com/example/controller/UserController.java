@@ -80,14 +80,14 @@ public class UserController {
     }
 
     @PutMapping("/addProductToCart")
-    public String addProductToCart(@RequestParam UUID userId, @RequestParam UUID productId) {
+    public String addProductToCart(@RequestParam UUID userId, @RequestParam UUID productId) throws Exception {
         Product product = productService.getProductById(productId);
         cartService.addProductToCart(userId, product);
         return "Product added to cart successfully";
     }
 
     @PutMapping("/deleteProductFromCart")
-    public String deleteProductFromCart(@RequestParam UUID userId, @RequestParam UUID productId) {
+    public String deleteProductFromCart(@RequestParam UUID userId, @RequestParam UUID productId) throws Exception {
         Product product = productService.getProductById(productId);
         cartService.deleteProductFromCart(userId, product);
         return "Product removed from cart successfully";

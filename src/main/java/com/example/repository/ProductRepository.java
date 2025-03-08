@@ -2,13 +2,14 @@ package com.example.repository;
 
 import com.example.model.Product;
 import org.springframework.stereotype.Repository;
-
 import java.util.ArrayList;
 import java.util.UUID;
 
 @Repository
-@SuppressWarnings("rawtypes")
 public class ProductRepository extends MainRepository<Product> {
+    
+    public ProductRepository() {}
+
     @Override
     protected String getDataPath() {
         return "src/main/java/com/example/data/products.json";
@@ -19,59 +20,48 @@ public class ProductRepository extends MainRepository<Product> {
         return Product[].class;
     }
 
-    public ProductRepository() {
-    }
-    public Product addProduct(Product product) {
-        ArrayList<Product> products = findAll(); // Load all products
-
-        // Assign a unique ID if not provided
-//        if (product.getId() == null) {
-//            product.setId(UUID.randomUUID());
-//        }
-
+    public Product addProduct(Product product) throws Exception {
         // Check if a product with the same ID already exists
-        for (Product p : products) {
+        for (Product p : findAll()) {
             if (p.getId().equals(product.getId())) {
-                throw new RuntimeException("Product with ID " + product.getId() + " already exists.");
+                throw new Exception("Product Already Exists");
             }
         }
 
-        products.add(product); // Add the new product
-        saveAll(products); // Save the updated product list to JSON
-
-        return product; // Return the newly added product
+       // Save the new product
+        save(product);
+        return product;
     }
 
+    // Retrieve all products
     public ArrayList<Product> getProducts() {
-        return findAll(); // Retrieve all products from the JSON file
+        return findAll();
     }
 
-    public Product getProductById(UUID productId) {
+    public Product getProductById(UUID productId) throws Exception {
         for (Product product : findAll()) {
             if (product.getId().equals(productId)) {
                 return product;
             }
         }
-        throw new RuntimeException("Product not found with ID: " + productId);
+        throw new Exception("Product not found");
     }
 
-    public Product updateProduct(UUID productId, String newName, double newPrice) {
-        ArrayList<Product> products = findAll();
+    public Product updateProduct(UUID productId, String newName, double newPrice) throws Exception {
+        Product product = getProductById(productId);
 
-        for (Product product : products) {
-            if (product.getId().equals(productId)) {
-                product.setName(newName);
-                product.setPrice(newPrice);
-                saveAll(products); // Save the updated list
-                return product;
-            }
-        }
-        throw new RuntimeException("Product with ID " + productId + " not found.");
+        // Update the product
+        product.setName(newName);
+        product.setPrice(newPrice);
+
+        // Save the updated product
+        save(product);
+        return product;
     }
 
-    public void applyDiscount(double discount, ArrayList<UUID> productIds) {
+    public void applyDiscount(double discount, ArrayList<UUID> productIds) throws Exception {
         if (discount < 0 || discount > 100) {
-            throw new IllegalArgumentException("Discount must be between 0 and 100.");
+            throw new Exception("Discount must be between 0 and 100.");
         }
 
         ArrayList<Product> products = findAll();
@@ -84,24 +74,12 @@ public class ProductRepository extends MainRepository<Product> {
         }
 
         saveAll(products); // Save the updated prices
-        System.out.println("Discount of " + discount + "% applied to selected products.");
     }
 
-    public void deleteProductById(UUID productId) {
-        ArrayList<Product> products = findAll();
-
-        for (Product product : products) {
-            if (product.getId().equals(productId)) {
-                products.remove(product);
-                saveAll(products);
-                System.out.println("Product with ID " + productId + " deleted successfully.");
-                return;
-            }
-        }
-
-        throw new RuntimeException("Product with ID " + productId + " not found.");
+    public void deleteProductById(UUID productId) throws Exception {
+        Product product = getProductById(productId); // Retrieve product by ID
+        ArrayList<Product> products = findAll(); // Retrieve all products
+        products.remove(product); // Remove product from list
+        saveAll(products);
     }
-
-
-
 }

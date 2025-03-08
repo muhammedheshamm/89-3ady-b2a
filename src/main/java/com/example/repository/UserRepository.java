@@ -53,51 +53,34 @@ public class UserRepository extends MainRepository<User> {
 
     // 6.2.2.4 Get The Orders of a User
     public List<Order> getOrdersByUserId(UUID userId) throws Exception {
-        try {
-            User user = getUserById(userId); // Retrieve user by ID
-            return user.getOrders();
-        } catch (Exception e) {
-            throw new Exception("User not found");
-        }
+        User user = getUserById(userId); // Retrieve user by ID
+        return user.getOrders();
     }
 
     // 6.2.2.5 Add Order to the User
     public void addOrderToUser(UUID userId, Order order) throws Exception {
-        try {
-            User user = getUserById(userId); // Retrieve user by ID
-            user.getOrders().add(order); // Add order to user
-            save(user); // Save updated user data back to users.json
-        } catch (Exception e) {
-            throw new Exception("User not found");
-        }
+        User user = getUserById(userId); // Retrieve user by ID
+        user.getOrders().add(order); // Add order to user
+        save(user); // Save updated user data back to users.json
     }
 
 
     // 6.2.2.6 Remove Order from User
     public void removeOrderFromUser(UUID userId, UUID orderId) throws Exception {
-        try {
-            User user = getUserById(userId); // Retrieve user by ID
-            List<Order> orders = user.getOrders(); // Retrieve user's orders
+        User user = getUserById(userId); // Retrieve user by ID
+        List<Order> orders = user.getOrders(); // Retrieve user's orders
 
-            // Remove order by ID
-            orders.removeIf(order -> order.getId().equals(orderId));
+        // Remove order by ID
+        orders.removeIf(order -> order.getId().equals(orderId));
 
-            user.setOrders(orders); // Update user's orders
-            save(user); // Save updated user data back to users.json
-        } catch (Exception e) {
-            throw new Exception("User not found");
-        }
+        user.setOrders(orders); // Update user's orders
+        save(user); // Save updated user data back to users.json
     }
 
     public void deleteUserById(UUID userId) throws Exception {
-        try {
-            User user = getUserById(userId); // Retrieve user by ID
-            ArrayList<User> users = findAll(); // Retrieve all users
-            users.remove(user); // Remove user from list
-            saveAll(users); // Save updated user list back to users.json
-
-        } catch (Exception e) {
-            throw new Exception("User not found");
-        }
+        User user = getUserById(userId); // Retrieve user by ID
+        ArrayList<User> users = findAll(); // Retrieve all users
+        users.remove(user); // Remove user from list
+        saveAll(users); // Save updated user list back to users.json
     }
 }
