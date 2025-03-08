@@ -50,6 +50,14 @@ public class ProductRepository extends MainRepository<Product> {
     public Product updateProduct(UUID productId, String newName, double newPrice) throws Exception {
         Product product = getProductById(productId);
 
+        if (newName == null || newName.isEmpty()) {
+            throw new Exception("Name cannot be empty");
+        }
+
+        if (newPrice < 0) {
+            throw new Exception("Price cannot be negative");
+        }
+
         // Update the product
         product.setName(newName);
         product.setPrice(newPrice);

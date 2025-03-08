@@ -1,37 +1,33 @@
 package com.example.controller;
 
 import com.example.model.Cart;
-import com.example.model.Order;
 import com.example.model.Product;
-import com.example.model.User;
 import com.example.service.CartService;
-import com.example.service.ProductService;
-import com.example.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.UUID;
 
 @RestController
 @RequestMapping("/cart")
 public class CartController {
 
-  private final UserService userService;
   private final CartService cartService;
-  private final ProductService productService;
 
   @Autowired
-  public CartController(UserService userService, CartService cartService, ProductService productService) {
-      this.userService = userService;
+  public CartController(CartService cartService) {
       this.cartService = cartService;
-      this.productService = productService;
   }
 
   @PostMapping("/")
-  public Cart addCart(@RequestBody Cart cart) throws Exception {
+  public Cart addCart(@RequestBody Cart cart) {
+    try {
       return cartService.addCart(cart);
+    } catch (Exception e) {
+        System.out.println(e.getMessage());
+        return null;
+    }
   }
 
   @GetMapping("/")
@@ -40,8 +36,13 @@ public class CartController {
   }
 
   @GetMapping("/{cartId}")
-  public Cart getCartById(@PathVariable UUID cartId) throws Exception {
-      return cartService.getCartById(cartId);
+  public Cart getCartById(@PathVariable UUID cartId) {
+    try {
+        return cartService.getCartById(cartId);
+    } catch (Exception e) {
+        System.out.println(e.getMessage());
+        return null;
+    }
   }
 
   @PutMapping("/addProduct/{cartId}")

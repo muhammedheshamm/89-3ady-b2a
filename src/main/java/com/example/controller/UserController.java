@@ -29,8 +29,13 @@ public class UserController {
     }
     // Add a new user
     @PostMapping("/")
-    public User addUser(@RequestBody User user) throws Exception {
-        return userService.addUser(user);   
+    public User addUser(@RequestBody User user) {
+        try {
+            return userService.addUser(user);
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+            return null;
+        }   
     }
 
     // Retrieve all users
@@ -41,14 +46,24 @@ public class UserController {
 
     // Retrieve a user by ID
     @GetMapping("/{userId}")
-    public User getUserById(@PathVariable UUID userId) throws Exception {
-        return userService.getUserById(userId);
+    public User getUserById(@PathVariable UUID userId) {
+        try {
+            return userService.getUserById(userId);
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+            return null;
+        }
     }
 
     // Retrieve all orders by user ID
     @GetMapping("/{userId}/orders")
-    public List<Order> getOrdersByUserId(@PathVariable UUID userId) throws Exception {
-        return userService.getOrdersByUserId(userId);
+    public List<Order> getOrdersByUserId(@PathVariable UUID userId) {
+        try {
+            return userService.getOrdersByUserId(userId);
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+            return new ArrayList<>();
+        }
     }
 
     // Add an order to a user
@@ -75,13 +90,17 @@ public class UserController {
 
     // Empty a user's cart
     @DeleteMapping("/{userId}/emptyCart")
-    public String emptyCart(@PathVariable UUID userId) throws Exception {
-        userService.emptyCart(userId);
-        return "Cart emptied successfully";
+    public String emptyCart(@PathVariable UUID userId) {
+        try {
+            userService.emptyCart(userId);
+            return "Cart emptied successfully";
+        } catch (Exception e) {
+            return e.getMessage();
+        }
     }
 
     @PutMapping("/addProductToCart")
-    public String addProductToCart(@RequestParam UUID userId, @RequestParam UUID productId) throws Exception {
+    public String addProductToCart(@RequestParam UUID userId, @RequestParam UUID productId) {
         try {
             Cart cart = cartService.getCartByUserId(userId);
             Product product = productService.getProductById(productId);
@@ -89,11 +108,15 @@ public class UserController {
             return "Product added to cart";
         } catch (Exception e) {
             if (e.getMessage().equals("Cart not found")) {
-                cartService.addCart(new Cart(UUID.randomUUID(), userId, new ArrayList<>()));
-                Cart cart = cartService.getCartByUserId(userId);
-                Product product = productService.getProductById(productId);
-                cartService.addProductToCart(cart.getId(), product);
-                return "Product added to cart";
+                try {
+                    cartService.addCart(new Cart(UUID.randomUUID(), userId, new ArrayList<>()));
+                    Cart cart = cartService.getCartByUserId(userId);
+                    Product product = productService.getProductById(productId);
+                    cartService.addProductToCart(cart.getId(), product);
+                    return "Product added to cart";
+                } catch (Exception ex) {
+                    return ex.getMessage();
+                }
             } else {
                 return e.getMessage();
             }
@@ -101,7 +124,7 @@ public class UserController {
     }
 
     @PutMapping("/deleteProductFromCart")
-    public String deleteProductFromCart(@RequestParam UUID userId, @RequestParam UUID productId) throws Exception {
+    public String deleteProductFromCart(@RequestParam UUID userId, @RequestParam UUID productId) {
         try {
             Product product = productService.getProductById(productId);
             Cart cart = cartService.getCartByUserId(userId);
@@ -128,8 +151,8 @@ public class UserController {
     @DeleteMapping("/delete/{userId}")
     public String deleteUserById(@PathVariable UUID userId) {
         try {
-        userService.deleteUserById(userId);
-        return "User deleted successfully";
+            userService.deleteUserById(userId);
+            return "User deleted successfully";
         } catch (Exception e) {
             return e.getMessage();
         }

@@ -11,7 +11,6 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Service
 public class UserService extends MainService<User>{
@@ -46,8 +45,8 @@ public class UserService extends MainService<User>{
 
     public void addOrderToUser(UUID userId) throws Exception {
         Cart userCart = cartService.getCartByUserId(userId);
-        if (userCart == null || userCart.getProducts().isEmpty()) {
-            throw new Exception ("Cart is empty or does not exist.");
+        if (userCart.getProducts().isEmpty()) {
+            throw new Exception("Cart is empty");
         }
 
         double totalPrice = userCart.getProducts().stream().mapToDouble(Product::getPrice).sum();
