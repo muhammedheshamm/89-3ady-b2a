@@ -1,5 +1,6 @@
 package com.example.controller;
 
+import com.example.model.Cart;
 import com.example.model.Order;
 import com.example.model.Product;
 import com.example.model.User;
@@ -74,23 +75,53 @@ public class UserController {
 
     // Empty a user's cart
     @DeleteMapping("/{userId}/emptyCart")
-    public String emptyCart(@PathVariable UUID userId) {
+    public String emptyCart(@PathVariable UUID userId) throws Exception {
         userService.emptyCart(userId);
         return "Cart emptied successfully";
     }
 
     @PutMapping("/addProductToCart")
     public String addProductToCart(@RequestParam UUID userId, @RequestParam UUID productId) throws Exception {
-        Product product = productService.getProductById(productId);
-        cartService.addProductToCart(userId, product);
-        return "Product added to cart successfully";
+        try {
+            Cart cart = cartService.getCartByUserId(userId);
+            Product product = productService.getProductById(productId);
+            cartService.addProductToCart(cart.getId(), product);
+            return "Product added to cart";
+        } catch (Exception e) {
+            if (e.getMessage().equals("Cart not found")) {
+                cartService.addCart(new Cart(UUID.randomUUID(), userId, new ArrayList<>()));
+                Cart cart = cartService.getCartByUserId(userId);
+                Product product = productService.getProductById(productId);
+                cartService.addProductToCart(cart.getId(), product);
+                return "Product added to cart";
+            } else {
+                return e.getMessage();
+            }
+        }
     }
 
     @PutMapping("/deleteProductFromCart")
     public String deleteProductFromCart(@RequestParam UUID userId, @RequestParam UUID productId) throws Exception {
-        Product product = productService.getProductById(productId);
-        cartService.deleteProductFromCart(userId, product);
-        return "Product removed from cart successfully";
+        try {
+            Product product = productService.getProductById(productId);
+            Cart cart = cartService.getCartByUserId(userId);
+            cartService.deleteProductFromCart(cart.getId(), product);
+            return "Product deleted from cart";
+        } catch (Exception e) {
+            if (e.getMessage().equals("Cart not found")) {
+                try {
+                    cartService.addCart(new Cart(UUID.randomUUID(), userId, new ArrayList<>()));
+                    Cart cart = cartService.getCartByUserId(userId);
+                    Product product = productService.getProductById(productId);
+                    cartService.deleteProductFromCart(cart.getId(), product);
+                    return "Product deleted from cart";
+                } catch (Exception ex) {
+                    return ex.getMessage();
+                }
+            } else {
+                return e.getMessage();
+            }
+        }
     }
 
     // Delete a user by ID

@@ -55,11 +55,11 @@ public class UserService extends MainService<User>{
 
         orderRepository.addOrder(newOrder);
         userRepository.addOrderToUser(userId, newOrder);
-        cartService.emptyCart(userId);
     }
 
-    public void emptyCart(UUID userId) {
-        cartService.emptyCart(userId);
+    public void emptyCart(UUID userId) throws Exception {
+        Cart userCart = cartService.getCartByUserId(userId);
+        userCart.setProducts(new ArrayList<>());
     }
 
     public void removeOrderFromUser(UUID userId, UUID orderId) throws Exception {
@@ -68,10 +68,21 @@ public class UserService extends MainService<User>{
     }
 
     public void deleteUserById(UUID userId) throws Exception {
-        List<Cart> userCarts = cartService.getCarts().stream()
-                .filter(cart -> cart.getUserId().equals(userId))
-                .collect(Collectors.toList());
-        userCarts.forEach(cart -> cartService.deleteCartById(cart.getId()));
+        getOrdersByUserId(userId).forEach(order -> {
+            try {
+                removeOrderFromUser(userId, order.getId());
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        });
+        
+        try {
+            Cart userCart = cartService.getCartByUserId(userId);
+            cartService.deleteCartById(userCart.getId());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        
 
         userRepository.deleteUserById(userId);
     }

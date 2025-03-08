@@ -3,13 +3,14 @@ package com.example.repository;
 import com.example.model.Cart;
 import com.example.model.Product;
 import org.springframework.stereotype.Repository;
-
 import java.util.ArrayList;
 import java.util.UUID;
 
 @Repository
-@SuppressWarnings("rawtypes")
 public class CartRepository extends MainRepository<Cart> {
+
+    public CartRepository() {}
+
     @Override
     protected String getDataPath() {
         return "src/main/java/com/example/data/carts.json";
@@ -20,20 +21,17 @@ public class CartRepository extends MainRepository<Cart> {
         return Cart[].class;
     }
 
-    public CartRepository(){
-    }
-
     // Add New Cart
-    public Cart addCart(Cart cart) {
-        ArrayList<Cart> carts = findAll();
+    public Cart addCart(Cart cart) throws Exception {
+        // Check if cart ID already exists
+        for (Cart c : findAll()) {
+            if (c.getId().equals(cart.getId())) {
+                throw new Exception("Cart Already Exists");
+            }
+        }
 
-        // Generate a new UUID if not provided
-//        if (cart.getId() == null) {
-//            cart.setId(UUID.randomUUID());
-//        }
-
-        carts.add(cart);
-        saveAll(carts);
+        // Save the new cart
+        save(cart);
         return cart;
     }
 
@@ -43,66 +41,64 @@ public class CartRepository extends MainRepository<Cart> {
     }
 
     // Get Specific Cart by ID
-    public Cart getCartById(UUID cartId) {
+    public Cart getCartById(UUID cartId) throws Exception {
         for (Cart cart : findAll()) {
             if (cart.getId().equals(cartId)) {
                 return cart;
             }
         }
-        throw new RuntimeException("Cart not found with ID: " + cartId);
+        throw new Exception("Cart not found");
     }
 
     // Get User's Cart by User ID
-    public Cart getCartByUserId(UUID userId) {
+    public Cart getCartByUserId(UUID userId) throws Exception {
         for (Cart cart : findAll()) {
             if (cart.getUserId().equals(userId)) {
                 return cart;
             }
         }
-        throw new RuntimeException("No cart found for user ID: " + userId);
+        throw new Exception("Cart not found");
     }
+
     // Add Product to Cart
-    public void addProductToCart(UUID cartId, Product product) {
-        ArrayList<Cart> carts = findAll();
-        Cart cart = getCartById(cartId);
-
-        cart.getProducts().add(product);
-        saveAll(carts);
-    }
-
-    // Delete Product from Cart
-    public void deleteProductFromCart(UUID cartId, Product product) {
-        ArrayList<Cart> carts = findAll();
+    public void addProductToCart(UUID cartId, Product product) throws Exception {
         Cart cart = getCartById(cartId);
 
         for (Product p : cart.getProducts()) {
             if (p.getId().equals(product.getId())) {
+                throw new Exception("Product already exists in cart.");
+            }
+        }
+
+        cart.getProducts().add(product);
+        save(cart); // Save updated cart
+    }
+
+    // Delete Product from Cart
+    public void deleteProductFromCart(UUID cartId, Product product) throws Exception {
+        Cart cart = getCartById(cartId);
+
+        if(cart.getProducts().isEmpty()) {
+            throw new Exception("Cart is empty");
+        }
+
+        for (Product p : cart.getProducts()) {
+            if (p.getId().equals(product.getId())) {
                 cart.getProducts().remove(p);
-                saveAll(carts); // Save updated carts list
+                save(cart); // Save updated cart
                 return;
             }
         }
 
-        throw new RuntimeException("Product not found in cart.");
+        throw new Exception("Product not found in cart");
     }
-
-
 
     // Delete the Cart
-    public void deleteCartById(UUID cartId) {
+    public void deleteCartById(UUID cartId) throws Exception {
         ArrayList<Cart> carts = findAll();
-
-        for (Cart cart : carts) {
-            if (cart.getId().equals(cartId)) {
-                carts.remove(cart);
-                saveAll(carts); // Save updated carts list
-                return;
-            }
-        }
-
-        throw new RuntimeException("Cart with ID " + cartId + " not found.");
+        Cart cart = getCartById(cartId);
+        carts.remove(cart);
+        saveAll(carts);
     }
-
-
 
 }
