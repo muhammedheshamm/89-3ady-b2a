@@ -1,6 +1,7 @@
 package com.example.repository;
 
 import com.example.model.Product;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Repository;
 import java.util.ArrayList;
 import java.util.UUID;
@@ -10,9 +11,12 @@ public class ProductRepository extends MainRepository<Product> {
     
     public ProductRepository() {}
 
+    @Value("${spring.application.productDataPath}")
+    private String productDataPath;
+
     @Override
     protected String getDataPath() {
-        return "src/main/java/com/example/data/products.json";
+        return productDataPath;
     }
 
     @Override
