@@ -25,6 +25,11 @@ public class ProductRepository extends MainRepository<Product> {
     }
 
     public Product addProduct(Product product) throws Exception {
+
+        if(product == null) {
+            throw new Exception("Product object is null");
+        }
+
         // Check if a product with the same ID already exists
         for (Product p : findAll()) {
             if (p.getId().equals(product.getId())) {
@@ -66,8 +71,10 @@ public class ProductRepository extends MainRepository<Product> {
         product.setName(newName);
         product.setPrice(newPrice);
 
-        // Save the updated product
-        save(product);
+        ArrayList<Product> products = findAll();
+        products.remove(product);
+        products.add(product);
+        saveAll(products);
         return product;
     }
 
@@ -77,12 +84,12 @@ public class ProductRepository extends MainRepository<Product> {
         }
 
         ArrayList<Product> products = findAll();
-
-        for (Product product : products) {
-            if (productIds.contains(product.getId())) {
-                double newPrice = product.getPrice() * (1 - discount / 100);
-                product.setPrice(newPrice);
-            }
+        for (UUID productId : productIds) {
+            Product product = getProductById(productId);
+            double newPrice = product.getPrice() * (1 - discount / 100);
+            product.setPrice(newPrice);
+            products.remove(product);
+            products.add(product);
         }
 
         saveAll(products); // Save the updated prices

@@ -4,7 +4,9 @@ import com.example.model.Cart;
 import com.example.model.Product;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Repository;
+
 import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Repository
@@ -27,6 +29,11 @@ public class CartRepository extends MainRepository<Cart> {
 
     // Add New Cart
     public Cart addCart(Cart cart) throws Exception {
+        
+        if (cart == null) {
+            throw new Exception("Cart object is null");
+        }
+
         // Check if cart ID already exists
         for (Cart c : findAll()) {
             if (c.getId().equals(cart.getId())) {
@@ -74,8 +81,14 @@ public class CartRepository extends MainRepository<Cart> {
             }
         }
 
-        cart.getProducts().add(product);
-        save(cart); // Save updated cart
+        List <Product> products = cart.getProducts();
+        products.add(product);
+        cart.setProducts(products);
+
+        ArrayList<Cart> carts = findAll();
+        carts.remove(cart);
+        carts.add(cart);
+        saveAll(carts);
     }
 
     // Delete Product from Cart
@@ -88,8 +101,13 @@ public class CartRepository extends MainRepository<Cart> {
 
         for (Product p : cart.getProducts()) {
             if (p.getId().equals(product.getId())) {
-                cart.getProducts().remove(p);
-                save(cart); // Save updated cart
+                List<Product> products = cart.getProducts();
+                products.remove(p);
+                cart.setProducts(products);
+                ArrayList<Cart> carts = findAll();
+                carts.remove(cart);
+                carts.add(cart);
+                saveAll(carts);
                 return;
             }
         }
