@@ -43,6 +43,11 @@ public class UserRepository extends MainRepository<User> {
 
     // Add a new user
     public User addUser(User user) throws Exception {
+
+        if (user == null) {
+            throw new Exception("User object is null");
+        }
+
         // Check if user ID already exists
         for (User u : findAll()) {
             if (u.getId().equals(user.getId())) {
@@ -64,8 +69,16 @@ public class UserRepository extends MainRepository<User> {
     // 6.2.2.5 Add Order to the User
     public void addOrderToUser(UUID userId, Order order) throws Exception {
         User user = getUserById(userId); // Retrieve user by ID
-        user.getOrders().add(order); // Add order to user
-        save(user); // Save updated user data back to users.json
+        List<Order> orders = user.getOrders(); // Add order to user
+        orders.add(order);
+        System.out.println("orders: " + orders.size());
+        user.setOrders(orders); // Update user's orders
+        System.out.println("user orders: " + user.getOrders().size());
+        // get all users -> remove the user -> add the user with the new order -> save all
+        ArrayList<User> users = findAll();
+        users.remove(user);
+        users.add(user);
+        saveAll(users); // Save updated user data back to users.json
     }
 
 
@@ -78,7 +91,11 @@ public class UserRepository extends MainRepository<User> {
         orders.removeIf(order -> order.getId().equals(orderId));
 
         user.setOrders(orders); // Update user's orders
-        save(user); // Save updated user data back to users.json
+        // get all users -> remove the user -> add the user with the new order -> save all
+        ArrayList<User> users = findAll();
+        users.remove(user);
+        users.add(user);
+        saveAll(users); // Save updated user data back to users.json
     }
 
     public void deleteUserById(UUID userId) throws Exception {

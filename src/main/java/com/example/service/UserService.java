@@ -58,7 +58,8 @@ public class UserService extends MainService<User>{
 
     public void emptyCart(UUID userId) throws Exception {
         Cart userCart = cartService.getCartByUserId(userId);
-        userCart.setProducts(new ArrayList<>());
+        cartService.deleteCartById(userCart.getId());
+        cartService.addCart(new Cart(userCart.getId(), userId, new ArrayList<>()));
     }
 
     public void removeOrderFromUser(UUID userId, UUID orderId) throws Exception {
@@ -71,7 +72,7 @@ public class UserService extends MainService<User>{
             try {
                 removeOrderFromUser(userId, order.getId());
             } catch (Exception e) {
-                e.printStackTrace();
+                // e.printStackTrace();
             }
         });
         
@@ -79,7 +80,7 @@ public class UserService extends MainService<User>{
             Cart userCart = cartService.getCartByUserId(userId);
             cartService.deleteCartById(userCart.getId());
         } catch (Exception e) {
-            e.printStackTrace();
+            // e.printStackTrace();
         }
         
 

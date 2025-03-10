@@ -25,6 +25,11 @@ public class OrderRepository extends MainRepository<Order> {
     }
 
     public void addOrder(Order order) throws Exception {
+
+        if (order == null) {
+            throw new Exception("Order object is null");
+        }
+
         // check if order ID already exists
         for (Order o : findAll()) {
             if (o.getId().equals(order.getId())) {
