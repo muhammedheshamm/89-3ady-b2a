@@ -50,4 +50,14 @@ public class Cart {
     public void setProducts(List<Product> products) {
         this.products = products;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        Cart cart = (Cart) o;
+
+        return id.equals(cart.id);
+    }
 }
