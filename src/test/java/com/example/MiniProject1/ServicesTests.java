@@ -21,7 +21,9 @@ import com.example.model.Cart;
 import com.example.model.Order;
 import com.example.model.Product;
 import com.example.model.User;
+import com.example.service.CartService;
 import com.example.service.OrderService;
+import com.example.service.ProductService;
 import com.example.service.UserService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -33,6 +35,12 @@ public class ServicesTests {
 
     @Autowired
     private OrderService orderService;
+
+    @Autowired
+    private CartService cartService;
+
+    @Autowired
+    private ProductService productService;
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -712,6 +720,575 @@ public class ServicesTests {
 
         assertEquals(null, find("Order", order), "Order should be deleted");
         assertEquals(0, ((User) find("User", user)).getOrders().size(), "User should have no orders");
+    }
+
+    /*
+     * CartService Tests
+     */
+
+    // addCart tests
+
+    @Test
+    void addCart_withValidInput_shouldReturnSameIdAndUserId() throws Exception {
+        UUID cartId = UUID.randomUUID();
+        UUID userId = UUID.randomUUID();
+        Cart cart = new Cart(cartId, userId, new ArrayList<>());
+        cartService.addCart(cart);
+
+        Cart createdCart = (Cart) find("Cart", cart);
+
+        assertNotNull(createdCart, "Cart should be created");
+        assertEquals(cartId, createdCart.getId(), "Cart ID should be the same as the one provided");
+        assertEquals(userId, createdCart.getUserId(), "Cart user ID should be the same as the one provided");
+    }
+
+    @Test
+    void addCart_withDuplicateId_shouldThrowException() throws Exception {
+        UUID cartId = UUID.randomUUID();
+        UUID userId1 = UUID.randomUUID();
+        UUID userId2 = UUID.randomUUID();
+
+        Cart cart1 = new Cart(cartId, userId1, new ArrayList<>());
+        Cart cart2 = new Cart(cartId, userId2, new ArrayList<>()); // Same ID, different user ID
+
+        addCart(cart1); // Add first cart
+
+        Exception exception = assertThrows(Exception.class, () -> cartService.addCart(cart2),
+                "Adding a cart with a duplicate ID should throw an exception");
+
+        assertEquals("Cart Already Exists", exception.getMessage(),
+                "Exception message should indicate duplicate cart ID");
+    }
+
+    @Test
+    void addCart_withNullObject_shouldThrowException() {
+        Exception exception = assertThrows(Exception.class, () -> cartService.addCart(null),
+                "Adding a null cart should throw an exception");
+
+        assertEquals("Cart object is null", exception.getMessage(),
+                "Exception message should indicate null cart object");
+    }
+
+    // getCartById tests
+
+    @Test
+    void getCartById_withValidId_shouldReturnCart() throws Exception {
+        UUID cartId = UUID.randomUUID();
+        UUID userId = UUID.randomUUID();
+        Cart cart = new Cart(cartId, userId, new ArrayList<>());
+        addCart(cart);
+
+        Cart retrievedCart = cartService.getCartById(cartId);
+
+        assertEquals(cartId, retrievedCart.getId(), "Cart ID should be the same as the one provided");
+        assertEquals(userId, retrievedCart.getUserId(), "Cart user ID should be the same as the one provided");
+    }
+
+    @Test
+    void getCartById_withInvalidId_shouldThrowException() {
+        UUID cartId = UUID.randomUUID();
+
+        Exception exception = assertThrows(Exception.class, () -> cartService.getCartById(cartId),
+                "Retrieving a cart with an invalid ID should throw an exception");
+
+        assertEquals("Cart not found", exception.getMessage(),
+                "Exception message should indicate cart not found");
+    }
+
+    @Test
+    void getCartById_withNullId_shouldThrowException() {
+        Exception exception = assertThrows(Exception.class, () -> cartService.getCartById(null),
+                "Retrieving a cart with a null ID should throw an exception");
+
+        assertEquals("Cart not found", exception.getMessage(),
+                "Exception message should indicate cart not found");
+    }
+
+    // getCartByUserId tests
+
+    @Test
+    void getCartByUserId_withValidId_shouldReturnCart() throws Exception {
+        UUID userId = UUID.randomUUID();
+        Cart cart = new Cart(UUID.randomUUID(), userId, new ArrayList<>());
+        addCart(cart);
+
+        Cart retrievedCart = cartService.getCartByUserId(userId);
+
+        assertEquals(userId, retrievedCart.getUserId(), "Cart user ID should be the same as the one provided");
+    }
+
+    @Test
+    void getCartByUserId_withInvalidId_shouldThrowException() {
+        UUID userId = UUID.randomUUID();
+
+        Exception exception = assertThrows(Exception.class, () -> cartService.getCartByUserId(userId),
+                "Retrieving a cart with an invalid user ID should throw an exception");
+
+        assertEquals("Cart not found", exception.getMessage(),
+                "Exception message should indicate cart not found");
+    }
+
+    @Test
+    void getCartByUserId_withInvalidUserId_shouldThrowException() {
+        UUID userId = UUID.randomUUID();
+        Cart cart = new Cart(UUID.randomUUID(), UUID.randomUUID(), new ArrayList<>());
+        addCart(cart);
+
+        Exception exception = assertThrows(Exception.class, () -> cartService.getCartByUserId(userId),
+                "Retrieving a cart with an invalid user ID should throw an exception");
+
+        assertEquals("Cart not found", exception.getMessage(),
+                "Exception message should indicate cart not found");
+    }
+
+    // getCarts tests
+
+    @Test
+    void getCarts_withNoCarts_shouldReturnEmptyList() {
+        assertEquals(0, cartService.getCarts().size(), "Cart list should be empty");
+    }
+
+    @Test
+    void getCarts_withMultipleCarts_shouldReturnAllCarts() throws Exception {
+        Cart cart1 = new Cart(UUID.randomUUID(), UUID.randomUUID(), new ArrayList<>());
+        Cart cart2 = new Cart(UUID.randomUUID(), UUID.randomUUID(), new ArrayList<>());
+        addCart(cart1);
+        addCart(cart2);
+
+        ArrayList<Cart> carts = cartService.getCarts();
+
+        assertEquals(2, carts.size(), "Cart list should contain two carts");
+    }
+
+    @Test
+    void getCarts_withMultipleCarts_shouldReturnCorrectCarts() throws Exception {
+        Cart cart1 = new Cart(UUID.randomUUID(), UUID.randomUUID(), new ArrayList<>());
+        Cart cart2 = new Cart(UUID.randomUUID(), UUID.randomUUID(), new ArrayList<>());
+        addCart(cart1);
+        addCart(cart2);
+
+        ArrayList<Cart> carts = cartService.getCarts();
+
+        assertEquals(cart1.getId(), carts.get(0).getId(), "First cart ID should match");
+        assertEquals(cart1.getUserId(), carts.get(0).getUserId(), "First cart user ID should match");
+
+        assertEquals(cart2.getId(), carts.get(1).getId(), "Second cart ID should match");
+        assertEquals(cart2.getUserId(), carts.get(1).getUserId(), "Second cart user ID should match");
+    }
+
+    // deleteCartById tests
+
+    @Test
+    void deleteCartById_withValidId_shouldDeleteCart() throws Exception {
+        UUID cartId = UUID.randomUUID();
+        Cart cart = new Cart(cartId, UUID.randomUUID(), new ArrayList<>());
+        addCart(cart);
+
+        cartService.deleteCartById(cartId);
+
+        assertEquals(null, find("Cart", cart), "Cart should be deleted");
+    }
+
+    @Test
+    void deleteCartById_withInvalid_Id_shouldThrowException() {
+        UUID cartId = UUID.randomUUID();
+
+        Exception exception = assertThrows(Exception.class, () -> cartService.deleteCartById(cartId),
+                "Deleting a cart with an invalid ID should throw an exception");
+
+        assertEquals("Cart not found", exception.getMessage(),
+                "Exception message should indicate cart not found");
+    }
+
+    @Test
+    void deleteCartById_withNullId_shouldThrowException() {
+        Exception exception = assertThrows(Exception.class, () -> cartService.deleteCartById(null),
+                "Deleting a cart with a null ID should throw an exception");
+
+        assertEquals("Cart not found", exception.getMessage(),
+                "Exception message should indicate cart not found");
+    }
+
+    // addProductToCart tests
+
+    @Test
+    void addProductToCart_withValidCartIdAndProduct_shouldAddProduct() throws Exception {
+        UUID cartId = UUID.randomUUID();
+        Cart cart = new Cart(cartId, UUID.randomUUID(), new ArrayList<>());
+        addCart(cart);
+
+        Product product = new Product(UUID.randomUUID(), "Product 1", 100.0);
+        addProduct(product);
+
+        cartService.addProductToCart(cartId, product);
+
+        Cart updatedCart = (Cart) find("Cart", cart);
+
+        assertEquals(1, updatedCart.getProducts().size(), "Cart should have one product");
+        assertEquals(product.getId(), updatedCart.getProducts().get(0).getId(), "Product ID should match");
+        assertEquals(product.getName(), updatedCart.getProducts().get(0).getName(), "Product name should match");
+        assertEquals(product.getPrice(), updatedCart.getProducts().get(0).getPrice(), "Product price should match");
+    }
+    
+    @Test
+    void addProductToCart_withDuplicateProduct_shouldThrowException() throws Exception {
+        UUID cartId = UUID.randomUUID();
+        Cart cart = new Cart(cartId, UUID.randomUUID(), new ArrayList<>());
+        addCart(cart);
+
+        Product product = new Product(UUID.randomUUID(), "Product 1", 100.0);
+        addProduct(product);
+
+        cartService.addProductToCart(cartId, product);
+
+        Exception exception = assertThrows(Exception.class, () -> cartService.addProductToCart(cartId, product),
+                "Adding a duplicate product to a cart should throw an exception");
+
+        assertEquals("Product already exists in cart.", exception.getMessage(),
+                "Exception message should indicate duplicate product");
+    }
+
+    @Test
+    void addProductToCart_withInvalidCartId_shouldThrowException() {
+        UUID cartId = UUID.randomUUID();
+        Product product = new Product(UUID.randomUUID(), "Product 1", 100.0);
+        addProduct(product);
+
+        Exception exception = assertThrows(Exception.class, () -> cartService.addProductToCart(cartId, product),
+                "Adding a product to a cart with an invalid ID should throw an exception");
+
+        assertEquals("Cart not found", exception.getMessage(),
+                "Exception message should indicate cart not found");
+    }
+
+    // deleteProductFromCart tests
+
+    @Test
+    void deleteProductFromCart_withValidCartIdAndProductId_shouldRemoveProduct() throws Exception {
+        UUID cartId = UUID.randomUUID();
+        Product product1 = new Product(UUID.randomUUID(), "Product 1", 100.0);
+        Product product2 = new Product(UUID.randomUUID(), "Product 2", 200.0);
+        Cart cart = new Cart(cartId, UUID.randomUUID(), new ArrayList<>(Arrays.asList(
+                product1, product2
+        )));
+
+        addCart(cart);
+
+
+        cartService.deleteProductFromCart(cartId, product1);
+
+        Cart updatedCart = (Cart) find("Cart", cart);
+
+        assertEquals(1, updatedCart.getProducts().size(), "Cart should have one product");
+        assertEquals("Product 2", updatedCart.getProducts().get(0).getName(), "Product name should match");
+        assertEquals(200.0, updatedCart.getProducts().get(0).getPrice(), "Product price should match");
+    }
+
+    @Test
+    void deleteProductFromCart_withInvalidCartId_shouldThrowException() {
+        UUID cartId = UUID.randomUUID();
+        Product product = new Product(UUID.randomUUID(), "Product 1", 100.0);
+        addProduct(product);
+
+        Exception exception = assertThrows(Exception.class, () -> cartService.deleteProductFromCart(cartId, product),
+                "Deleting a product from a cart with an invalid ID should throw an exception");
+
+        assertEquals("Cart not found", exception.getMessage(),
+                "Exception message should indicate cart not found");
+    }
+
+    @Test
+    void deleteProductFromCart_fromEmptyCart_shouldThrowException() throws Exception {
+        UUID cartId = UUID.randomUUID();
+        Cart cart = new Cart(cartId, UUID.randomUUID(), new ArrayList<>());
+        addCart(cart);
+
+        Product product = new Product(UUID.randomUUID(), "Product 1", 100.0);
+        addProduct(product);
+
+        Exception exception = assertThrows(Exception.class, () -> cartService.deleteProductFromCart(cartId, product),
+                "Deleting a product from an empty cart should throw an exception");
+
+        assertEquals("Cart is empty", exception.getMessage(),
+                "Exception message should indicate product not found");
+    }
+
+
+    /*
+     * ProductService Tests
+     */
+
+    // addProduct tests
+
+    @Test
+    void addProduct_withValidInput_shouldReturnSameIdAndName() throws Exception {
+        UUID productId = UUID.randomUUID();
+        String name = "Product 1";
+        double price = 100.0;
+        Product product = new Product(productId, name, price);
+        productService.addProduct(product);
+
+        Product createdProduct = (Product) find("Product", product);
+
+        assertNotNull(createdProduct, "Product should be created");
+        assertEquals(productId, createdProduct.getId(), "Product ID should be the same as the one provided");
+        assertEquals(name, createdProduct.getName(), "Product name should be the same as the one provided");
+        assertEquals(price, createdProduct.getPrice(), "Product price should be the same as the one provided");
+    }
+
+    @Test
+    void addProduct_withDuplicateId_shouldThrowException() throws Exception {
+        UUID productId = UUID.randomUUID();
+        String name1 = "Product 1";
+        String name2 = "Product 2";
+        double price1 = 100.0;
+        double price2 = 200.0;
+
+        Product product1 = new Product(productId, name1, price1);
+        Product product2 = new Product(productId, name2, price2); // Same ID, different name
+
+        addProduct(product1); // Add first product
+
+        Exception exception = assertThrows(Exception.class, () -> productService.addProduct(product2),
+                "Adding a product with a duplicate ID should throw an exception");
+
+        assertEquals("Product Already Exists", exception.getMessage(),
+                "Exception message should indicate duplicate product ID");
+    }
+
+    @Test
+    void addProduct_withNullObject_shouldThrowException() {
+        Exception exception = assertThrows(Exception.class, () -> productService.addProduct(null),
+                "Adding a null product should throw an exception");
+
+        assertEquals("Product object is null", exception.getMessage(),
+                "Exception message should indicate null product object");
+    }
+
+    // getProductById tests
+
+    @Test
+    void getProductById_withValidId_shouldReturnProduct() throws Exception {
+        UUID productId = UUID.randomUUID();
+        String name = "Product 1";
+        double price = 100.0;
+        Product product = new Product(productId, name, price);
+        addProduct(product);
+
+        Product retrievedProduct = productService.getProductById(productId);
+
+        assertEquals(productId, retrievedProduct.getId(), "Product ID should be the same as the one provided");
+        assertEquals(name, retrievedProduct.getName(), "Product name should be the same as the one provided");
+        assertEquals(price, retrievedProduct.getPrice(), "Product price should be the same as the one provided");
+    }
+
+    @Test
+    void getProductById_withInvalidId_shouldThrowException() {
+        UUID productId = UUID.randomUUID();
+
+        Exception exception = assertThrows(Exception.class, () -> productService.getProductById(productId),
+                "Retrieving a product with an invalid ID should throw an exception");
+
+        assertEquals("Product not found", exception.getMessage(),
+                "Exception message should indicate product not found");
+    }
+
+    @Test
+    void getProductById_withNullId_shouldThrowException() {
+        Exception exception = assertThrows(Exception.class, () -> productService.getProductById(null),
+                "Retrieving a product with a null ID should throw an exception");
+
+        assertEquals("Product not found", exception.getMessage(),
+                "Exception message should indicate product not found");
+    }
+
+    // getProducts tests
+
+    @Test
+    void getProducts_withNoProducts_shouldReturnEmptyList() {
+        assertEquals(0, productService.getProducts().size(), "Product list should be empty");
+    }
+
+    @Test
+    void getProducts_withMultipleProducts_shouldReturnAllProducts() throws Exception {
+        Product product1 = new Product(UUID.randomUUID(), "Product 1", 100.0);
+        Product product2 = new Product(UUID.randomUUID(), "Product 2", 200.0);
+        addProduct(product1);
+        addProduct(product2);
+
+        ArrayList<Product> products = productService.getProducts();
+
+        assertEquals(2, products.size(), "Product list should contain two products");
+    }
+
+    @Test
+    void getProducts_withMultipleProducts_shouldReturnCorrectProducts() throws Exception {
+        Product product1 = new Product(UUID.randomUUID(), "Product 1", 100.0);
+        Product product2 = new Product(UUID.randomUUID(), "Product 2", 200.0);
+        addProduct(product1);
+        addProduct(product2);
+
+        ArrayList<Product> products = productService.getProducts();
+
+        assertEquals(product1.getId(), products.get(0).getId(), "First product ID should match");
+        assertEquals(product1.getName(), products.get(0).getName(), "First product name should match");
+        assertEquals(product1.getPrice(), products.get(0).getPrice(), "First product price should match");
+
+        assertEquals(product2.getId(), products.get(1).getId(), "Second product ID should match");
+        assertEquals(product2.getName(), products.get(1).getName(), "Second product name should match");
+        assertEquals(product2.getPrice(), products.get(1).getPrice(), "Second product price should match");
+    }
+
+    // deleteProductById tests
+
+    @Test
+    void deleteProductById_withValidId_shouldDeleteProduct() throws Exception {
+        UUID productId = UUID.randomUUID();
+        Product product = new Product(productId, "Product 1", 100.0);
+        addProduct(product);
+
+        productService.deleteProductById(productId);
+
+        assertEquals(null, find("Product", product), "Product should be deleted");
+    }
+
+    @Test
+    void deleteProductById_withInvalidId_shouldThrowException() {
+        UUID productId = UUID.randomUUID();
+
+        Exception exception = assertThrows(Exception.class, () -> productService.deleteProductById(productId),
+                "Deleting a product with an invalid ID should throw an exception");
+
+        assertEquals("Product not found", exception.getMessage(),
+                "Exception message should indicate product not found");
+    }
+
+    @Test
+    void deleteProductById_shouldDeleteItFromCart() throws Exception {
+        UUID productId = UUID.randomUUID();
+        Product product = new Product(productId, "Product 1", 100.0);
+        addProduct(product);
+
+        UUID cartId = UUID.randomUUID();
+        Cart cart = new Cart(cartId, UUID.randomUUID(), new ArrayList<>(Arrays.asList(product)));
+        addCart(cart);
+
+        productService.deleteProductById(productId);
+
+        assertEquals(null, find("Product", product), "Product should be deleted");
+        assertEquals(0, ((Cart) find("Cart", cart)).getProducts().size(), "Cart should have no products");
+    }
+
+    // UpdateProduct tests
+
+    @Test
+    void updateProduct_withValidInput_shouldUpdateProduct() throws Exception {
+        UUID productId = UUID.randomUUID();
+        Product product = new Product(productId, "Product 1", 100.0);
+        addProduct(product);
+
+        productService.updateProduct(productId, "Product 2", 200.0);
+
+        Product retrievedProduct = (Product) find("Product", product);
+
+        assertEquals(productId, retrievedProduct.getId(), "Product ID should be the same as the one provided");
+        assertEquals("Product 2", retrievedProduct.getName(), "Product name should be updated");
+        assertEquals(200.0, retrievedProduct.getPrice(), "Product price should be updated");
+    }
+
+    @Test
+    void updateProduct_withInvalidId_shouldThrowException() {
+        UUID productId = UUID.randomUUID();
+
+        Exception exception = assertThrows(Exception.class, () -> productService.updateProduct(productId, "product 2", 200.0),
+                "Updating a product with an invalid ID should throw an exception");
+
+        assertEquals("Product not found", exception.getMessage(),
+                "Exception message should indicate product not found");
+    }
+
+    @Test
+    void updateProduct_shouldUpdateItInCart() throws Exception {
+        UUID productId = UUID.randomUUID();
+        Product product = new Product(productId, "Product 1", 100.0);
+        addProduct(product);
+
+        UUID cartId = UUID.randomUUID();
+        Cart cart = new Cart(cartId, UUID.randomUUID(), new ArrayList<>(Arrays.asList(product)));
+        addCart(cart);
+
+        productService.updateProduct(productId, "Product 2", 200.0);
+
+        Product updatedProduct = productService.getProductById(productId);
+        Cart updatedCart = (Cart) find("Cart", cart);
+
+        assertEquals("Product 2", updatedProduct.getName(), "Product name should be updated");
+        assertEquals(200.0, updatedProduct.getPrice(), "Product price should be updated");
+        assertEquals("Product 2", updatedCart.getProducts().get(0).getName(), "Product name in cart should be updated");
+        assertEquals(200.0, updatedCart.getProducts().get(0).getPrice(), "Product price in cart should be updated");
+    }
+
+    // ApplyDiscount tests
+
+    @Test
+    void applyDiscount_withValidInput_shouldApplyDiscountToAllInputProducts() throws Exception {
+        UUID productId1 = UUID.randomUUID();
+        UUID productId2 = UUID.randomUUID();
+        Product product1 = new Product(productId1, "Product 1", 100.0);
+        Product product2 = new Product(productId2, "Product 2", 200.0);
+        addProduct(product1);
+        addProduct(product2);
+
+        productService.applyDiscount(50, new ArrayList<>(Arrays.asList(productId1, productId2)));
+
+        Product updatedProduct1 = productService.getProductById(productId1);
+        Product updatedProduct2 = productService.getProductById(productId2);
+
+        assertEquals(50.0, updatedProduct1.getPrice(), "Product 1 price should be updated");
+        assertEquals(100.0, updatedProduct2.getPrice(), "Product 2 price should be updated");
+
+        Exception exception = assertThrows(Exception.class, () -> productService.applyDiscount(500, new ArrayList<>(Arrays.asList(productId1, productId2))),
+                "Discounting a product by more than 100% should throw an exception");
+        
+        assertEquals("Discount must be between 0 and 100.", exception.getMessage(),
+                "Exception message should indicate discount cannot be more than 100%");
+
+        Exception exception2 = assertThrows(Exception.class, () -> productService.applyDiscount(-50, new ArrayList<>(Arrays.asList(productId1, productId2))),
+                "Discounting a product by a negative percentage should throw an exception");
+
+        assertEquals("Discount must be between 0 and 100.", exception2.getMessage(),
+                "Exception message should indicate discount cannot be negative");
+    }
+
+    @Test
+    void applyDiscount_withInvalidId_shouldThrowException() {
+        UUID productId = UUID.randomUUID();
+
+        Exception exception = assertThrows(Exception.class, () -> productService.applyDiscount(50, new ArrayList<>(Arrays.asList(productId))),
+                "Applying a discount to a product with an invalid ID should throw an exception");
+
+        assertEquals("Product not found", exception.getMessage(),
+                "Exception message should indicate product not found");
+    }
+
+    @Test
+    void applyDiscount_shouldUpdateItInCart() throws Exception {
+        UUID productId = UUID.randomUUID();
+        Product product = new Product(productId, "Product 1", 100.0);
+        addProduct(product);
+
+        UUID cartId = UUID.randomUUID();
+        Cart cart = new Cart(cartId, UUID.randomUUID(), new ArrayList<>(Arrays.asList(product)));
+        addCart(cart);
+
+        productService.applyDiscount(50, new ArrayList<>(Arrays.asList(productId)));
+
+        Product updatedProduct = productService.getProductById(productId);
+        Cart updatedCart = (Cart) find("Cart", cart);
+
+        assertEquals(50.0, updatedProduct.getPrice(), "Product price should be updated");
+        assertEquals(50.0, updatedCart.getProducts().get(0).getPrice(), "Product price in cart should be updated");
+
     }
 
 
