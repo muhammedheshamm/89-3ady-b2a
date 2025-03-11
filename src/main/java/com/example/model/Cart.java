@@ -17,6 +17,7 @@ public class Cart {
     }
 
     public Cart(UUID userId, List<Product> products) {
+        this.id = UUID.randomUUID();
         this.userId = userId;
         this.products = products;
     }

@@ -55,6 +55,10 @@ public class UserRepository extends MainRepository<User> {
             }
         }
 
+        if(user.getOrders() == null) {
+            user = new User(user.getName(), new ArrayList<Order>());
+        }
+
         // Save the new user
         save(user);
         return user;

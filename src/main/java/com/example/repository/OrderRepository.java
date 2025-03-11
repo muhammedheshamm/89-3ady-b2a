@@ -37,6 +37,10 @@ public class OrderRepository extends MainRepository<Order> {
             }
         }
 
+        if(order.getId() == null) {
+            order = new Order(order.getUserId(), order.getTotalPrice(), order.getProducts());
+        }
+
         save(order);
     }
 

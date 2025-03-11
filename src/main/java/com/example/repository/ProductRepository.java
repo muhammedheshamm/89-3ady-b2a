@@ -37,6 +37,10 @@ public class ProductRepository extends MainRepository<Product> {
             }
         }
 
+        if(product.getId() == null) {
+            product = new Product(product.getName(), product.getPrice());
+        }
+
        // Save the new product
         save(product);
         return product;

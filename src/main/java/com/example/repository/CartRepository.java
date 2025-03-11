@@ -41,6 +41,10 @@ public class CartRepository extends MainRepository<Cart> {
             }
         }
 
+        if(cart.getProducts() == null) {
+            cart = new Cart(cart.getUserId(), new ArrayList<Product>());
+        }
+
         // Save the new cart
         save(cart);
         return cart;
